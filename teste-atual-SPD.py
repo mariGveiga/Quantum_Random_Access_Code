@@ -6,6 +6,7 @@ import math as math
 import cmath as cmath
 from random import uniform
 import picos as pc
+import qutip as qt
 
 simulator = AerSimulator()
 d = 2           # words size 
@@ -25,6 +26,17 @@ def initialize_circuit(ampl_list):
     result = simulator.run(qc_aer).result()
     #psi = result.get_statevector()
     return qc
+
+def Pi_random(): # Return a random projector for dimension d
+    # Definir theta e phi para o exemplo
+    d=2
+    theta = np.random.rand(1)[0] * np.pi # Theta da esfera de Bloch
+    phi = np.random.rand(1)[0] * 2 * np.pi # Phi da esfera de Bloch
+    # criação da unitária U
+    out = np.cos(theta)*np.sin(theta)*np.exp(1j*phi)
+   
+    
+    return np.array([[np.cos(theta)**2,out],[out.conjugate(),np.sin(theta)**2]])
 
 # create psi states 
 states = []
@@ -246,28 +258,130 @@ for i in range(len(correct_results)):
 
 # ----------------- OTIMIZAÇÃO -----------------
 
-# matrizes dos produtos externos  
-m_prod_ext = np.array([[[1,0],[0,0]], [[0,0],[0,1]]])           # |0><0| e |1><1| respectivamente 
+n = 2 # Number of letters
+for d in range(2,3):
+    Id = np.eye(d) # Defining the Identity operator
+    w =np.exp(2j*np.pi/d) # Defining the phase
+    Pc = 0.5*(1 + 1/d) # Classical probability of success
+    # Lists fopr the first phase (encoding)
+    Pq = [] # first quantum/classical probability of success
+    S = [] # 1st quantum success
+    RHO = []
+    RHO_0 = []
+    # Lists for the second phase (decoding)
+    Pq1 = [] # 2nd quantum/classical probability of success
+    S1 = [] # 2nd quantum success
+    M1 = []
+    DeltaPq = [] 
+    
+    # Lists for first phase
+    A = [] # Cumputational basis
+    B = [] # Fourier basis
+    rho0 = [[0 for _ in range(d)] for _ in range(d)] # pure sate to be optimized
+    for x0 in range(d):
+        for x1 in range(d):
+            ketx=qt.Qobj(np.zeros(d)) # Constructiong one of the MUBs
+            for j in range(d):
+                ketx += d**(-1/2)*w**(x1*j)*qt.basis(d,j)
+        
+            b = ketx*ketx.dag()  # 2nd measurement operator
+            B.append(b[:])
+        a = qt.basis(d,x0)*qt.basis(d,x0).dag() # 1st measurement operator
+        A.append(a[:])
+    B=B[:d]
+    
+# for x in range(100):
+#     RANDOM_M = 0 # 1 if random, 0 otherwise
+#     if RANDOM_M == 1:
+#         A[0]=Pi_random()
+#         A[1]=np.eye(2)-A[0]
+#         B[0]=Pi_random()
+#         B[1]=np.eye(2)-B[0]
+    
 
+# OPTIMIZATION FOR THE STATE
 
-problem = pc.Problem()
-N = 1 / (2*d**2)          # termo de normalização (1/8)
-sucesso = 0               # Função objetivo: maximizar a probabilidade de acerto               
+F = pc.Problem() #Initiate first-phase solution
+    
+Success = 0 # Optimization variable
+for x0 in range(d):
+    for x1 in range(d):
+        # State rho0 that will be optimizied 
+        rho0[x0][x1]=pc.HermitianVariable(f"rho0_{x0}_{x1}", (d, d))
+        # Restriction to the state be a state.
+        F.add_constraint(rho0[x0][x1]>>0)
+        F.add_constraint(pc.trace(rho0[x0][x1]) == 1)
+        # Success definition
+        Success += np.real((1/(2*d**2))*(pc.trace(A[x0]*rho0[x0][x1]) + pc.trace(B[x1]*rho0[x0][x1])))
+                
+# Our goal: maximize Success   
+F.set_objective("max", Success) 
+# Solve the problem: choose the solver (e.g: cvxopt or mosek).
+F.solve(solver = "cvxopt")#, verbosity=1)
 
-# matrizes das projeções
-projec_matrices = np.zeros((d, d, m_prod_ext[0].shape[0], m_prod_ext[0].shape[1]), dtype=complex) 
+#storing the optimized success 
+S=F.value
+Pq=F.value/Pc
 
-for j in range(d):
-    for xj in range(d):
-        projec_matrices[j, xj] = np.dot(np.conjugate(U[j]).T, np.dot(m_prod_ext[xj], U[j]))           # U|0><0|U^{dag} ou U|1><1|U^{dag}
-        # print(projec_matrices[j, n])
-        problem.add_constraint(projec_matrices[j][xj] >> 0)
-    problem.add_constraint(projec_matrices[j][0]+projec_matrices[j][1] == np.eye(2))
+# storing the optimized states in a list
+RHO = [[0 for _ in range(d)] for _ in range(d)]
+for x0 in range(d):
+    for x1 in range(d):
+        RHO[x0][x1]=(np.array(rho0[x0][x1].value))
+print("Success_RHO_opt = ",S) 
+# print("A = \n",np.round(A,3))
+# print("B = \n",np.round(B,3))
+# print("RHO = \n",np.round(RHO,3))
+        
+# OTIMIZAÇÃO DA MEDIDA        
+RANDOM_RHO = 0 # 1 if random, 0 otherwise
+d=2
+if RANDOM_RHO ==1:
+    RHO = [[0 for _ in range(d)] for _ in range(d)]
+    for x0 in range(d):
+        for x1 in range(d):
+            RHO[x0][x1]=Pi_random()
+                
 
-# Não utilizada na primeira fase de testes --- somente na segunda quando rho não for aleatório
-projec_matrices = np.zeros((d, d, m_prod_ext[0].shape[0], m_prod_ext[0].shape[1]), dtype=complex) 
-for j in range(d):
-    for xj in range(d):
-        projec_matrices[j][xj] = np.dot(np.conjugate(U[j]).T, np.dot(m_prod_ext[xj], U[j]))
-        # print(projec_matrices[j][xj])
+n=[]
+A1 = [0 for _ in range(d)]
+B1 = [0 for _ in range(d)]
+F1 = pc.Problem() # Initiate second-phase solution
+"""
+from now on we optimize the measurement using the optimized states
+"""
+# Defining the measurements.
+for i in range(d):
+    # Fisrt basis to decode x0
+    A1[i]=pc.HermitianVariable(f"A1_{i}", (d, d)) 
+    # Constraint to be a projector
+    F1.add_constraint(A1[i]>>0)
+    #F1.add_constraint(pc.trace(A1[i]) == 1)
+    # Second basis to decode x1
+    B1[i]=pc.HermitianVariable(f"B1_{i}", (d, d))
+    # Constraint to be a projector
+    F1.add_constraint(B1[i]>>0)
+    #F1.add_constraint(pc.trace(B1[i]) == 1)
+# Constraint to that the projectors of A1 (B1) form a complete basis.   
+F1.add_constraint(pc.sum(A1)==Id)
+F1.add_constraint(pc.sum(B1)==Id)
 
+Success1 = 0 # Optimization variable
+for x0 in range(d):
+    for x1 in range(d):
+        Success1 += np.real((1/(2*d**2))*(pc.trace(A1[x0]*RHO[x0][x1]) + pc.trace(B1[x1]*RHO[x0][x1])))
+
+# Our goal: maximize Success   
+F1.set_objective("max", Success1) 
+# Solve the problem: choose the solver (e.g.: cvxopt or mosek).
+F1.solve(solver = "cvxopt")#,verbosity=1)
+S1=F1.value
+print("Success_Measure_Opt = ",S1)
+Am=[]
+Bm=[]
+for i in range(d):
+    Am.append(np.array(A1[i].value))
+    Bm.append(np.array(B1[i].value))
+print("Am = \n",np.round(Am,3))
+print("Bm = \n",np.round(Bm,3))
+#print("RHO = \n",np.round(RHO,3))
