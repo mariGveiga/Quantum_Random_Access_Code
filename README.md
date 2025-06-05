@@ -5,6 +5,6 @@ O projeto aqui descrito explora os fundamentos da criptografia quântica, sobret
 
 Para a verificação do relatório na íntegra, ele se encontra na aba dos documentos.
 
-Ademais, os códigos aqui desenvolvidos utilizaram da linguegem Python, com o auxílio das bibliotecas Qiskit e Picos para a criação dos circuitos quânticos e sua otimização, respectivamente. 
+Ademais, os códigos aqui desenvolvidos utilizaram a linguagem Python, com o auxílio das bibliotecas Qiskit e Picos para a criação dos circuitos quânticos e sua otimização, respectivamente. 
 
 O arquivo "QRAC - Não aleatório" aborda o Código de Acesso Aleatório no estado ideal de codificação e decodificação, como é referenciado na seção "2.2 Parte inicial do desenvolvimento". Já o arquivo "QRAC-Aleatório" demonstra conforme a seção "2.3 Aprimoramento do Algoritmo", a randomização das amplitudes iniciais da codificação dos estado quânticos que, por sua vez, serão otimizados a fim de maximizar a função Sucesso de acerto. 
