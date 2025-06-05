@@ -1,2 +1,10 @@
 # Quantum_Random_Access_Code
-Projeto de Iniciação Científica - Universidade Federal do ABC
+Este repositório trata-se de um Projeto de Iniciação Científica feito pela aluna Mariana Gonzalez Veiga, com a assistência do Doutor Breno Marques Gonçalves Teixeira por meio da Universidade Federal do ABC, com o apoio institucional da FAPESP (Fundação de Amparo à Pesquisa do Estado de São Paulo). 
+
+O projeto aqui descrito explora os fundamentos da criptografia quântica, sobretudo nos protocolos BB84, o Código de Acesso Aleatório (Random Access Code - RAC) e sua alternativa quântica (QRAC). O intuito desta pesquisa é introduzir conceitos necessários para a compreensão do funcionamento desses protocolos, assim como abordar o desenvolvimento prático do QRAC. Esse estudo conta com uma revisão bibliográfica abrangente sobre o tema e com a elaboração de dois algoritmos em Python para o QRAC. O primeiro considera o cenário ideal de codificação de mensagens, enquanto o segundo algoritmo emprega a programação semidefinida para otimizar o processo de encriptação, inicialmente aleatório. Os resultados obtidos validaram a eficácia das abordagens, atingindo uma probabilidade de sucesso de $85,4\%$ na decodificação correta da mensagem, superando o limite clássico de $75\%$. Portanto, conclui-se que os resultados comprovam a vantagem da criptografia quântica em relação aos métodos tradicionais, destacando seu potencial para aplicações em comunicações seguras e desenvolvimento de novos protocolos de segurança cibernética.
+
+Para a verificação do relatório na íntegra, ele se encontra na aba dos documentos.
+
+Ademais, os códigos aqui desenvolvidos utilizaram da linguegem Python, com o auxílio das bibliotecas Qiskit e Picos para a criação dos circuitos quânticos e sua otimização, respectivamente. 
+
+O arquivo "QRAC - Não aleatório" aborda o Código de Acesso Aleatório no estado ideal de codificação e decodificação, como é referenciado na seção "2.2 Parte inicial do desenvolvimento". Já o arquivo "QRAC-Aleatório" demonstra conforme a seção "2.3 Aprimoramento do Algoritmo", a randomização das amplitudes iniciais da codificação dos estado quânticos que, por sua vez, serão otimizados a fim de maximizar a função Sucesso de acerto. 
