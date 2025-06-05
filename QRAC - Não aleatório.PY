@@ -201,6 +201,8 @@ for i in range(d):
             media_acerto.append(prob_y)
 
 # Imprime as probabilidades
-print("\nProbabilidades de acerto para cada caso:")
-for caso, prob in probabilidades.items():
-    print(f"{caso}: {prob:.4f} ({prob * 100:.2f}%)")
+# print("\nProbabilidades de acerto para cada caso:")
+# for caso, prob in probabilidades.items():
+#     print(f"{caso}: {prob:.4f} ({prob * 100:.2f}%)")
+
+print("Probabilidade média de acerto: %.2f" %((sum(media_acerto)/len(media_acerto))*100))
